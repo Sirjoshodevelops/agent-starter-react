@@ -1,65 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 import { MonitorIcon, MoonIcon, SunIcon } from '@phosphor-icons/react';
-import type { ThemeMode } from '@/lib/types';
-import { THEME_MEDIA_QUERY, THEME_STORAGE_KEY, cn } from '@/lib/utils';
-
-const THEME_SCRIPT = `
-  const doc = document.documentElement;
-  const theme = localStorage.getItem("${THEME_STORAGE_KEY}") ?? "system";
-
-  if (theme === "system") {
-    if (window.matchMedia("${THEME_MEDIA_QUERY}").matches) {
-      doc.classList.add("dark");
-    } else {
-      doc.classList.add("light");
-    }
-  } else {
-    doc.classList.add(theme);
-  }
-`
-  .trim()
-  .replace(/\n/g, '')
-  .replace(/\s+/g, ' ');
-
-function applyTheme(theme: ThemeMode) {
-  const doc = document.documentElement;
-
-  doc.classList.remove('dark', 'light');
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
-
-  if (theme === 'system') {
-    if (window.matchMedia(THEME_MEDIA_QUERY).matches) {
-      doc.classList.add('dark');
-    } else {
-      doc.classList.add('light');
-    }
-  } else {
-    doc.classList.add(theme);
-  }
-}
+import { cn } from '@/lib/utils';
 
 interface ThemeToggleProps {
   className?: string;
 }
 
-export function ApplyThemeScript() {
-  return <script id="theme-script">{THEME_SCRIPT}</script>;
-}
-
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<ThemeMode | undefined>(undefined);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    const storedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode) ?? 'system';
-
-    setTheme(storedTheme);
+    setMounted(true);
   }, []);
 
-  function handleThemeChange(theme: ThemeMode) {
-    applyTheme(theme);
-    setTheme(theme);
+  if (!mounted) {
+    return null;
   }
 
   return (
@@ -72,7 +31,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       <span className="sr-only">Color scheme toggle</span>
       <button
         type="button"
-        onClick={() => handleThemeChange('dark')}
+        onClick={() => setTheme('dark')}
         className="cursor-pointer p-1 pl-1.5"
         suppressHydrationWarning
       >
@@ -81,7 +40,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       </button>
       <button
         type="button"
-        onClick={() => handleThemeChange('light')}
+        onClick={() => setTheme('light')}
         className="cursor-pointer px-1.5 py-1"
         suppressHydrationWarning
       >
@@ -90,7 +49,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       </button>
       <button
         type="button"
-        onClick={() => handleThemeChange('system')}
+        onClick={() => setTheme('system')}
         className="cursor-pointer p-1 pr-1.5"
         suppressHydrationWarning
       >
