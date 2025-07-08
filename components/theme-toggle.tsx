@@ -74,6 +74,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         type="button"
         onClick={() => handleThemeChange('dark')}
         className="cursor-pointer p-1 pl-1.5"
+        suppressHydrationWarning
       >
         <span className="sr-only">Enable dark color scheme</span>
         <MoonIcon size={16} weight="bold" className={cn(theme !== 'dark' && 'opacity-25')} />
@@ -82,6 +83,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         type="button"
         onClick={() => handleThemeChange('light')}
         className="cursor-pointer px-1.5 py-1"
+        suppressHydrationWarning
       >
         <span className="sr-only">Enable light color scheme</span>
         <SunIcon size={16} weight="bold" className={cn(theme !== 'light' && 'opacity-25')} />
@@ -90,6 +92,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         type="button"
         onClick={() => handleThemeChange('system')}
         className="cursor-pointer p-1 pr-1.5"
+        suppressHydrationWarning
       >
         <span className="sr-only">Enable system color scheme</span>
         <MonitorIcon size={16} weight="bold" className={cn(theme !== 'system' && 'opacity-25')} />
