@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Room } from 'livekit-client';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
-import { XIcon, MinusIcon, DragHandleDots2Icon } from '@phosphor-icons/react/dist/ssr';
+import { XIcon, MinusIcon, DragHandleDots2Icon, ChatCircleIcon } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'motion/react';
 import { App } from '@/components/app';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const defaultConfig: WidgetConfig = {
   primaryColor: '#002cf2',
   backgroundColor: '#ffffff',
   textColor: '#000000',
-  borderRadius: 12,
+  borderRadius: 16,
   position: 'bottom-right',
   size: 'medium',
   width: 400,
@@ -42,6 +42,7 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
   const [isMinimized, setIsMinimized] = useState(true);
   const [config, setConfig] = useState<WidgetConfig>(defaultConfig);
   const [isPreview, setIsPreview] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const room = useMemo(() => new Room(), []);
 
   useEffect(() => {
@@ -61,24 +62,19 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
       setIsPreview(true);
     }
 
-    // Auto-open if configured
-    if (config.autoOpen && !config.showMinimized) {
-      setIsMinimized(false);
-    } else {
-      setIsMinimized(config.showMinimized);
-    }
-  }, [searchParams, config.autoOpen, config.showMinimized]);
+    setIsLoaded(true);
+  }, [searchParams]);
 
-  const getSizeClasses = () => {
-    switch (config.size) {
-      case 'small':
-        return 'w-80 h-96';
-      case 'large':
-        return 'w-[500px] h-[700px]';
-      default:
-        return `w-[${config.width}px] h-[${config.height}px]`;
+  useEffect(() => {
+    if (isLoaded) {
+      // Auto-open if configured
+      if (config.autoOpen && !config.showMinimized) {
+        setIsMinimized(false);
+      } else {
+        setIsMinimized(config.showMinimized);
+      }
     }
-  };
+  }, [config.autoOpen, config.showMinimized, isLoaded]);
 
   const getThemeClasses = () => {
     switch (config.theme) {
@@ -95,12 +91,20 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
     '--primary': config.primaryColor,
     '--background': config.backgroundColor,
     '--foreground': config.textColor,
-    borderRadius: `${config.borderRadius}px`,
   } as React.CSSProperties;
+
+  if (!isLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   if (isPreview) {
     return (
-      <div className="w-full h-full">
+      <div className={cn('w-full h-full', getThemeClasses())} style={customStyles}>
+        <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
         <WidgetContent
           config={config}
           appConfig={appConfig}
@@ -113,14 +117,13 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
   }
 
   return (
-    <div className={cn('fixed inset-0 pointer-events-none', getThemeClasses())}>
+    <div className={cn('fixed inset-0 pointer-events-none', getThemeClasses())} style={customStyles}>
       <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
       <div
         className="pointer-events-auto"
         style={{
           position: 'fixed',
           zIndex: config.zIndex,
-          ...customStyles,
         }}
       >
         <WidgetContent
@@ -145,6 +148,7 @@ interface WidgetContentProps {
 
 function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room }: WidgetContentProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (config.enableDragging) {
@@ -161,23 +165,56 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-14 h-14 bg-primary rounded-full shadow-lg cursor-pointer flex items-center justify-center hover:scale-110 transition-transform"
-          onClick={onToggleMinimize}
-          style={{ backgroundColor: config.primaryColor }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className="relative"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="text-white"
+          <motion.div
+            className="w-16 h-16 rounded-full shadow-2xl cursor-pointer flex items-center justify-center relative overflow-hidden"
+            onClick={onToggleMinimize}
+            style={{ 
+              backgroundColor: config.primaryColor,
+              borderRadius: `${config.borderRadius}px`,
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-              fill="currentColor"
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+            
+            {/* Icon */}
+            <ChatCircleIcon size={24} className="text-white relative z-10" weight="fill" />
+            
+            {/* Pulse animation */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-white/30"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.7, 0, 0.7],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
             />
-          </svg>
+          </motion.div>
+
+          {/* Tooltip */}
+          <AnimatePresence>
+            {isHovered && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap"
+              >
+                {config.customTitle || appConfig.pageTitle}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       ) : (
         <motion.div
@@ -187,7 +224,7 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className={cn(
-            'bg-background border shadow-2xl overflow-hidden',
+            'bg-background border shadow-2xl overflow-hidden widget-container',
             config.size === 'small' && 'w-80 h-96',
             config.size === 'medium' && 'w-[400px] h-[600px]',
             config.size === 'large' && 'w-[500px] h-[700px]'
@@ -196,27 +233,34 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
             borderRadius: `${config.borderRadius}px`,
             width: config.width,
             height: config.height,
+            backgroundColor: config.backgroundColor,
           }}
         >
           {config.showHeader && (
             <div
-              className="flex items-center justify-between p-3 border-b bg-muted/50"
+              className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100 widget-header"
               onMouseDown={handleMouseDown}
               style={{ cursor: config.enableDragging ? 'move' : 'default' }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {config.enableDragging && (
-                  <DragHandleDots2Icon size={16} className="text-muted-foreground" />
+                  <DragHandleDots2Icon size={16} className="text-gray-400" />
                 )}
-                <div>
-                  <h3 className="font-semibold text-sm">
-                    {config.customTitle || appConfig.pageTitle}
-                  </h3>
-                  {(config.customSubtitle || appConfig.pageDescription) && (
-                    <p className="text-xs text-muted-foreground">
-                      {config.customSubtitle || appConfig.pageDescription}
-                    </p>
-                  )}
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: config.primaryColor }}
+                  />
+                  <div>
+                    <h3 className="font-semibold text-sm text-gray-900">
+                      {config.customTitle || appConfig.pageTitle}
+                    </h3>
+                    {(config.customSubtitle || appConfig.pageDescription) && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {config.customSubtitle || appConfig.pageDescription}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -224,7 +268,7 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
                   variant="ghost"
                   size="sm"
                   onClick={onToggleMinimize}
-                  className="h-6 w-6 p-0"
+                  className="h-7 w-7 p-0 hover:bg-gray-200 rounded-full"
                 >
                   <MinusIcon size={14} />
                 </Button>
@@ -232,7 +276,7 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
             </div>
           )}
 
-          <div className="flex-1 relative">
+          <div className="flex-1 relative bg-background">
             <RoomContext.Provider value={room}>
               <RoomAudioRenderer />
               <StartAudio label="Start Audio" />
@@ -241,14 +285,15 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
           </div>
 
           {config.showBranding && (
-            <div className="px-3 py-2 border-t bg-muted/30">
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="px-4 py-2 border-t bg-gray-50/80 backdrop-blur-sm">
+              <p className="text-xs text-gray-500 text-center">
                 Powered by{' '}
                 <a
                   href="https://livekit.io"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline hover:no-underline"
+                  className="font-medium hover:text-gray-700 transition-colors"
+                  style={{ color: config.primaryColor }}
                 >
                   LiveKit
                 </a>
