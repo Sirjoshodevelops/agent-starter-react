@@ -20,12 +20,20 @@ export default function useConnectionDetails() {
       window.location.origin
     );
     fetch(url.toString())
-      .then((res) => res.json())
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}: ${res.statusText}`);
+        }
+        return data;
+      })
       .then((data) => {
         setConnectionDetails(data);
       })
       .catch((error) => {
-        console.error('Error fetching connection details:', error);
+        console.error('Error fetching connection details:', error.message || error);
+        // You might want to show a user-friendly error message here
+        // For example, using a toast notification or setting an error state
       });
   }, []);
 
