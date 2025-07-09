@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Room } from 'livekit-client';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
-import { XIcon, MinusIcon, DragHandleDots2Icon, ChatCircleIcon } from '@phosphor-icons/react/dist/ssr';
+import { XIcon, MinusIcon, ChatCircleIcon } from '@phosphor-icons/react/dist/ssr';
+import { DragHandleDots2Icon } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'motion/react';
 import { App } from '@/components/app';
 import { Button } from '@/components/ui/button';
@@ -39,61 +40,61 @@ const defaultConfig: WidgetConfig = {
 
 export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
-  const [config, setConfig] = useState<WidgetConfig>(defaultConfig);
+  const [config, setConfig] = useState<WidgetConfig | null>(null);
   const [isPreview, setIsPreview] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [resolvedThemeClass, setResolvedThemeClass] = useState('');
   const room = useMemo(() => new Room(), []);
 
   useEffect(() => {
     const configParam = searchParams.get('config');
     const previewParam = searchParams.get('preview');
     
+    let parsedConfig = defaultConfig;
     if (configParam) {
       try {
-        const parsedConfig = JSON.parse(decodeURIComponent(configParam));
-        setConfig({ ...defaultConfig, ...parsedConfig });
+        const configFromParam = JSON.parse(decodeURIComponent(configParam));
+        parsedConfig = { ...defaultConfig, ...configFromParam };
       } catch (error) {
         console.error('Failed to parse widget config:', error);
       }
     }
 
-    if (previewParam === 'true') {
-      setIsPreview(true);
+    setConfig(parsedConfig);
+    setIsPreview(previewParam === 'true');
+
+    // Resolve theme class
+    const getThemeClasses = () => {
+      switch (parsedConfig.theme) {
+        case 'dark':
+          return 'dark';
+        case 'light':
+          return '';
+        default:
+          return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : '';
+      }
+    };
+
+    setResolvedThemeClass(getThemeClasses());
+
+    // Set initial minimized state
+    if (parsedConfig.autoOpen && !parsedConfig.showMinimized) {
+      setIsMinimized(false);
+    } else {
+      setIsMinimized(parsedConfig.showMinimized);
     }
 
-    setIsLoaded(true);
+    setMounted(true);
   }, [searchParams]);
 
-  useEffect(() => {
-    if (isLoaded) {
-      // Auto-open if configured
-      if (config.autoOpen && !config.showMinimized) {
-        setIsMinimized(false);
-      } else {
-        setIsMinimized(config.showMinimized);
-      }
-    }
-  }, [config.autoOpen, config.showMinimized, isLoaded]);
-
-  const getThemeClasses = () => {
-    switch (config.theme) {
-      case 'dark':
-        return 'dark';
-      case 'light':
-        return '';
-      default:
-        return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : '';
-    }
-  };
-
-  const customStyles = {
+  const customStyles = config ? {
     '--primary': config.primaryColor,
     '--background': config.backgroundColor,
     '--foreground': config.textColor,
-  } as React.CSSProperties;
+  } as React.CSSProperties : {};
 
-  if (!isLoaded) {
+  if (!mounted || !config) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -103,7 +104,7 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
 
   if (isPreview) {
     return (
-      <div className={cn('w-full h-full', getThemeClasses())} style={customStyles}>
+      <div className={cn('w-full h-full', resolvedThemeClass)} style={customStyles}>
         <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
         <WidgetContent
           config={config}
@@ -117,7 +118,7 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
   }
 
   return (
-    <div className={cn('fixed inset-0 pointer-events-none', getThemeClasses())} style={customStyles}>
+    <div className={cn('fixed inset-0 pointer-events-none', resolvedThemeClass)} style={customStyles}>
       <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
       <div
         className="pointer-events-auto"
