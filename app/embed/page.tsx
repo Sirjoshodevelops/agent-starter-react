@@ -9,8 +9,20 @@ export default async function EmbedPage() {
   const appConfig = await getAppConfig(origin);
 
   return (
-    <Suspense fallback={<div>Loading widget...</div>}>
-      <EmbeddedWidget appConfig={appConfig} />
-    </Suspense>
+    <html lang="en" className="h-full">
+      <head>
+        <title>{appConfig.pageTitle} - Widget</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className="h-full m-0 p-0 overflow-hidden">
+        <Suspense fallback={
+          <div className="w-full h-full flex items-center justify-center bg-white">
+            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+          </div>
+        }>
+          <EmbeddedWidget appConfig={appConfig} />
+        </Suspense>
+      </body>
+    </html>
   );
 }

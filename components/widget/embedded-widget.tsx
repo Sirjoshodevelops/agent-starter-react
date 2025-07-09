@@ -96,7 +96,7 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
 
   if (!mounted || !config) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center bg-white">
         <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
@@ -125,6 +125,10 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
         style={{
           position: 'fixed',
           zIndex: config.zIndex,
+          ...(config.position === 'bottom-right' && { bottom: '20px', right: '20px' }),
+          ...(config.position === 'bottom-left' && { bottom: '20px', left: '20px' }),
+          ...(config.position === 'top-right' && { top: '20px', right: '20px' }),
+          ...(config.position === 'top-left' && { top: '20px', left: '20px' }),
         }}
       >
         <WidgetContent
@@ -224,12 +228,7 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className={cn(
-            'bg-background border shadow-2xl overflow-hidden widget-container',
-            config.size === 'small' && 'w-80 h-96',
-            config.size === 'medium' && 'w-[400px] h-[600px]',
-            config.size === 'large' && 'w-[500px] h-[700px]'
-          )}
+          className="bg-background border shadow-2xl overflow-hidden widget-container flex flex-col"
           style={{
             borderRadius: `${config.borderRadius}px`,
             width: config.width,
@@ -239,7 +238,7 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
         >
           {config.showHeader && (
             <div
-              className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100 widget-header"
+              className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-gray-50 to-gray-100 widget-header flex-shrink-0"
               onMouseDown={handleMouseDown}
               style={{ cursor: config.enableDragging ? 'move' : 'default' }}
             >
@@ -277,16 +276,18 @@ function WidgetContent({ config, appConfig, isMinimized, onToggleMinimize, room 
             </div>
           )}
 
-          <div className="flex-1 relative bg-background">
+          <div className="flex-1 relative bg-background overflow-hidden">
             <RoomContext.Provider value={room}>
               <RoomAudioRenderer />
               <StartAudio label="Start Audio" />
-              <App appConfig={appConfig} />
+              <div className="h-full w-full">
+                <App appConfig={appConfig} />
+              </div>
             </RoomContext.Provider>
           </div>
 
           {config.showBranding && (
-            <div className="px-4 py-2 border-t bg-gray-50/80 backdrop-blur-sm">
+            <div className="px-4 py-2 border-t bg-gray-50/80 backdrop-blur-sm flex-shrink-0">
               <p className="text-xs text-gray-500 text-center">
                 Powered by{' '}
                 <a
