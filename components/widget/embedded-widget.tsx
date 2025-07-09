@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Room } from 'livekit-client';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
-import { XIcon, MinusIcon, DragHandleDots2Icon, ChatCircleIcon } from '@phosphor-icons/react';
+import { XIcon, MinusIcon, DragHandleDots2Icon, ChatCircleIcon } from '@phosphor-icons/react/dist/ssr';
 import { motion, AnimatePresence } from 'motion/react';
 import { App } from '@/components/app';
 import { Button } from '@/components/ui/button';
