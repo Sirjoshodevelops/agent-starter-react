@@ -598,8 +598,15 @@ export function WidgetBuilder({ appConfig }: WidgetBuilderProps) {
               </CardHeader>
               <CardContent>
                 {showPreview && (
-                  <div className="relative min-h-[700px] bg-gradient-to-br from-gray-100 via-gray-50 to-white rounded-xl overflow-hidden border-2 border-gray-200">
+                  <div className="relative min-h-[700px] bg-gradient-to-br from-gray-100 via-gray-50 to-white rounded-xl overflow-hidden border-2 border-gray-200 shadow-inner">
                     <WidgetPreview config={config} appConfig={appConfig} />
+                    
+                    {/* Debug info for widget visibility */}
+                    <div className="absolute bottom-4 left-4 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono opacity-75">
+                      Widget: {config.showMinimized ? 'Minimized' : 'Expanded'} | 
+                      Theme: {config.theme} | 
+                      Z-Index: {config.zIndex}
+                    </div>
                   </div>
                 )}
               </CardContent>

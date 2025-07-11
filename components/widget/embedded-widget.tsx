@@ -104,7 +104,7 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
 
   if (isPreview) {
     return (
-      <div className={cn('w-full h-full', resolvedThemeClass)} style={customStyles}>
+      <div className={cn('w-full h-full bg-transparent', resolvedThemeClass)} style={customStyles}>
         <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
         <WidgetContent
           config={config}
@@ -118,10 +118,10 @@ export function EmbeddedWidget({ appConfig }: EmbeddedWidgetProps) {
   }
 
   return (
-    <div className={cn('fixed inset-0 pointer-events-none', resolvedThemeClass)} style={customStyles}>
+    <div className={cn('fixed inset-0 pointer-events-none z-50', resolvedThemeClass)} style={customStyles}>
       <style dangerouslySetInnerHTML={{ __html: config.customCSS }} />
       <div
-        className="pointer-events-auto"
+        className="pointer-events-auto relative"
         style={{
           position: 'fixed',
           zIndex: config.zIndex,

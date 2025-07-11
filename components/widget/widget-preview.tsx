@@ -64,7 +64,7 @@ export function WidgetPreview({ config, appConfig }: WidgetPreviewProps) {
   return (
     <div className="relative w-full h-full">
       {/* Mock website content */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden bg-white">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -140,17 +140,18 @@ export function WidgetPreview({ config, appConfig }: WidgetPreviewProps) {
       <iframe
         ref={iframeRef}
         style={getPositionStyles()}
-        className="border-0"
+        className="border-0 bg-white"
         title="Widget Preview"
+        allow="microphone; camera"
       />
 
       {/* Position indicator */}
-      <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium">
+      <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
         Position: {config.position.replace('-', ' ')}
       </div>
 
       {/* Size indicator */}
-      <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium">
+      <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
         {config.showMinimized ? '64×64px (minimized)' : `${config.width}×${config.height}px`}
       </div>
     </div>
